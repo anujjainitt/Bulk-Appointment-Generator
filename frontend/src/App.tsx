@@ -264,7 +264,7 @@ function App() {
       if (selectedRows.length > 0) {
         // Prepare selected data as JSON
         const selectedData = [excelData[0], ...selectedRows.map(idx => filteredRows[idx])];
-        response = await fetch('http://localhost:5000/upload-excel', {
+        response = await fetch('https://bulk-appointment-generator.vercel.app/', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ data: selectedData }),
@@ -275,7 +275,7 @@ function App() {
         if (excelFile) {
           formData.append('file', excelFile);
         }
-        response = await fetch('http://localhost:5000/upload-excel', {
+        response = await fetch('https://bulk-appointment-generator.vercel.app/', {
           method: 'POST',
           body: formData,
         });
