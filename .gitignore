@@ -91,6 +91,7 @@ jspm_packages/
 # Uploads directory (if it contains user uploads)
 uploads/
 *.docx
+!backend/templates/*.docx
 *.pdf
 
 # Temporary files
