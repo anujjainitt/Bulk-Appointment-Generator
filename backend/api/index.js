@@ -10,12 +10,22 @@ module.exports = async (req, res) => {
     res.status(405).json({ error: 'Method not allowed' });
     return;
   }
-  let tempFilePath = null;
+
+  // Robust body parsing for Vercel
+  let body = req.body;
+  if (!body || typeof body === 'string') {
+    try {
+      body = JSON.parse(body || '{}');
+    } catch (e) {
+      return res.status(400).json({ error: 'Invalid JSON' });
+    }
+  }
+
   let responseSent = false;
   try {
     let data;
-    if (req.body && req.body.data) {
-      let parsed = req.body.data;
+    if (body && body.data) {
+      let parsed = body.data;
       if (typeof parsed === 'string') parsed = JSON.parse(parsed);
       const [header, ...rows] = parsed;
       data = rows.map(row => Object.fromEntries(header.map((h, i) => [h, row[i]])));
