@@ -193,37 +193,56 @@ function App() {
     });
   };
 
+  const [fileError, setFileError] = useState<string | null>(null);
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    setExcelFile(file || null)
+    const file = e.target.files?.[0];
+    setFileError(null);
     if (file) {
-      setLoading(true)
-      const reader = new FileReader()
+      const validTypes = [
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'application/vnd.ms-excel',
+        '.xlsx',
+        '.xls'
+      ];
+      const fileName = file.name.toLowerCase();
+      const isExcel =
+        validTypes.includes(file.type) ||
+        fileName.endsWith('.xlsx') ||
+        fileName.endsWith('.xls');
+      if (!isExcel) {
+        setFileError('Please upload a valid Excel file (.xlsx or .xls)');
+        setExcelFile(null);
+        if (fileInputRef.current) fileInputRef.current.value = '';
+        return;
+      }
+      setExcelFile(file);
+      setLoading(true);
+      const reader = new FileReader();
       reader.onload = (evt) => {
-        const bstr = evt.target?.result as string
-        const wb = XLSX.read(bstr, { type: 'binary' })
-        const wsname = wb.SheetNames[0]
-        const ws = wb.Sheets[wsname]
-        const data = XLSX.utils.sheet_to_json(ws, { defval: '', header: 1 })
+        const bstr = evt.target?.result as string;
+        const wb = XLSX.read(bstr, { type: 'binary' });
+        const wsname = wb.SheetNames[0];
+        const ws = wb.Sheets[wsname];
+        const data = XLSX.utils.sheet_to_json(ws, { defval: '', header: 1 });
         if (data.length === 0) {
-          setExcelData([])
-          setLoading(false)
-          return
+          setExcelData([]);
+          setLoading(false);
+          return;
         }
-        const header = data[0] as string[]
-        const colIndexes = REQUIRED_COLUMNS.map(col => header.indexOf(col))
+        const header = data[0] as string[];
+        const colIndexes = REQUIRED_COLUMNS.map(col => header.indexOf(col));
         const filteredData = [
           REQUIRED_COLUMNS,
           ...data.slice(1).map((row: any) => colIndexes.map(idx => (idx !== -1 ? row[idx] : '')))
-        ]
-        setExcelData(filteredData)
-        setLoading(false)
-      }
-      reader.readAsBinaryString(file)
+        ];
+        setExcelData(filteredData);
+        setLoading(false);
+      };
+      reader.readAsBinaryString(file);
     }
-    // Reset the input so the same file can be uploaded again
-    if (fileInputRef.current) fileInputRef.current.value = ''
-  }
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
 
   const handleDownloadSample = () => {
     const sampleData = [
@@ -396,6 +415,11 @@ function App() {
               <Typography variant="h4" fontWeight={900} gutterBottom align="center" color="primary">
                 Bulk Appointment Letter Generator
               </Typography>
+              {fileError && (
+                <Typography color="error" sx={{ fontWeight: 600, mb: 1 }}>
+                  {fileError}
+                </Typography>
+              )}
               <motion.div whileHover={{ scale: 1.05, boxShadow: '0 4px 20px rgba(25, 118, 210, 0.15)' }} whileTap={{ scale: 0.97 }}>
                 <Button
                   variant="contained"
