@@ -69,7 +69,7 @@ router.post('/', upload.single('file'), async (req, res) => {
       let folderName = 'Other';
       let designation = (row['Designation'] || '').trim().toLowerCase();
       if (designation === 'jr. software engineer' || designation === 'junior software engineer') {
-        templateFile = 'Junior Software Engineer-Appointment_Letter.docx';
+        templateFile = 'JuniorSoftwareEngineer-Appointment_Letter.docx';
         folderName = 'Junior Software Engineer';
       }
       let safeName = row['Name'] ? String(row['Name']).replace(/[^a-zA-Z0-9 \-_\.]/g, '').trim() : '';

@@ -100,7 +100,7 @@ app.post('/upload-excel', upload.single('file'), async (req, res) => {
       let folderName = 'Other';
       let designation = (row['Designation'] || '').trim().toLowerCase();
       if (designation === 'jr. software engineer' || designation === 'junior software engineer') {
-        templateFile = 'Junior Software Engineer-Appointment_Letter.docx';
+        templateFile = 'JuniorSoftwareEngineer-Appointment_Letter.docx';
         folderName = 'Junior Software Engineer';
       }
       const templatePath = path.join(__dirname, 'templates', templateFile);
