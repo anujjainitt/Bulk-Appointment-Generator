@@ -1,12 +1,9 @@
-/// <reference types="react-scripts" />
-// @ts-ignore: No type definitions for 'react-resizable'
 import { useState, useRef, useEffect } from 'react'
 import * as XLSX from 'xlsx'
 import { saveAs } from 'file-saver'
 import {
   Box,
   Button,
-  Container,
   Typography,
   Paper,
   Table,
@@ -16,11 +13,7 @@ import {
   TableHead,
   TableRow,
   LinearProgress,
-  Alert,
   Stack,
-  IconButton,
-  useMediaQuery,
-  useTheme,
   Drawer,
   List,
   ListItem,
@@ -30,10 +23,11 @@ import {
   Divider,
   AppBar,
   Toolbar,
+  useMediaQuery,
+  useTheme,
 } from '@mui/material'
 import CloudUploadIcon from '@mui/icons-material/CloudUpload'
 import DownloadIcon from '@mui/icons-material/Download'
-import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile'
 import DescriptionIcon from '@mui/icons-material/Description'
 import { format, parseISO, isValid } from 'date-fns'
 import Tooltip from '@mui/material/Tooltip'
@@ -174,10 +168,6 @@ function App() {
   const [excelFile, setExcelFile] = useState<File | null>(null)
   const [excelData, setExcelData] = useState<any[][]>([])
   const [loading, setLoading] = useState(false)
-  const [downloaded, setDownloaded] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const theme = useTheme()
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
   const [selectedPage, setSelectedPage] = useState('bulk')
   const fileInputRef = useRef<HTMLInputElement | null>(null)
   const [page, setPage] = useState(1);
@@ -206,8 +196,6 @@ function App() {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     setExcelFile(file || null)
-    setDownloaded(false)
-    setError(null)
     if (file) {
       setLoading(true)
       const reader = new FileReader()
@@ -271,8 +259,6 @@ function App() {
   const handleGenerateDoc = async () => {
     if (!excelFile && selectedRows.length === 0) return;
     setLoading(true);
-    setDownloaded(false);
-    setError(null);
     try {
       let response;
       if (selectedRows.length > 0) {
@@ -302,15 +288,14 @@ function App() {
         filename = disposition.split('filename=')[1].replace(/['"]/g, '');
       }
       saveAs(blob, filename);
-      setDownloaded(true);
     } catch (err) {
-      setError('Error generating document. Please try again.');
+      console.error('Error generating document. Please try again.', err);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleChangePage = (event: React.ChangeEvent<unknown>, value: number) => {
+  const handleChangePage = (value: number) => {
     setPage(value);
   };
 
@@ -335,6 +320,9 @@ function App() {
       email.includes(search.toLowerCase())
     );
   }) : [];
+
+  const theme = useTheme()
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
 
   return (
     <ThemeProvider theme={modernTheme}>
@@ -456,7 +444,7 @@ function App() {
                   <TableContainer component={Paper} sx={{ maxHeight: '60vh', minHeight: 200, boxShadow: 1, border: '1px solid #e3e6f0', width: '100%', borderRadius: 0, p: 0, overflowY: 'auto', overflowX: 'auto' }}>
                     <Table size="small" stickyHeader sx={{ width: 'max-content', minWidth: '100%' }}>
                       <colgroup>
-                        {excelData[0]?.map((col: string, idx: number) => (
+                        {excelData[0]?.map((_, idx: number) => (
                           <col key={idx} style={{ width: colWidths[idx] || defaultColWidth }} />
                         ))}
                       </colgroup>
@@ -485,8 +473,8 @@ function App() {
                               indeterminateIcon={<svg width="18" height="18" viewBox="0 0 18 18"><rect width="18" height="18" rx="4" fill="#fff" stroke="#1976d2" strokeWidth="2"/><rect x="4" y="8.25" width="10" height="1.5" rx="0.75" fill="#1976d2"/></svg>}
                             />
                           </TableCell>
-                          {excelData[0].map((col: string, idx: number) => {
-                            const isAddress = col === 'Address';
+                          {excelData[0].map((_, idx: number) => {
+                            const isAddress = excelData[0][idx] === 'Address';
                             return (
                               <TableCell
                                 key={idx}
@@ -519,11 +507,11 @@ function App() {
                                   minConstraints={[80, 16]}
                                   maxConstraints={[600, 16]}
                                   handle={<span style={{ position: 'absolute', right: 0, top: 0, height: '100%', width: 8, cursor: 'col-resize', zIndex: 2, background: 'rgba(25, 118, 210, 0.15)' }} />}
-                                  onResizeStop={(e: unknown, data: { size: { width: number } }) => handleResize(idx, data.size.width)}
+                                  onResizeStop={(_, data: { size: { width: number } }) => handleResize(idx, data.size.width)}
                                   draggableOpts={{ enableUserSelectHack: false }}
                                 >
                                   <div style={{ width: '100%', height: '100%', padding: '0 4px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxSizing: 'border-box', overflow: isAddress ? 'hidden' : 'visible', textOverflow: isAddress ? 'ellipsis' : 'unset', whiteSpace: isAddress ? 'nowrap' : 'normal', wordBreak: 'break-word', textAlign: 'center' }}>
-                                    {col}
+                                    {excelData[0][idx]}
                                   </div>
                                 </ResizableBox>
                               </TableCell>
@@ -614,7 +602,7 @@ function App() {
                   <Box display="flex" justifyContent="space-between" alignItems="center" mt={2}>
                     <Box display="flex" alignItems="center">
                       <Typography variant="body2" sx={{ mr: 1 }}>Rows per page:</Typography>
-                      <Select value={rowsPerPage} onChange={(event, child) => handleChangeRowsPerPage(event as React.ChangeEvent<{ value: unknown }>)} size="small">
+                      <Select value={rowsPerPage} onChange={(event) => handleChangeRowsPerPage(event as React.ChangeEvent<{ value: unknown }>)} size="small">
                         {[5, 10, 20, 50, 100].map((option) => (
                           <MenuItem key={option} value={option}>{option}</MenuItem>
                         ))}
@@ -623,7 +611,7 @@ function App() {
                     <Pagination
                       count={Math.ceil(filteredRows.length / rowsPerPage)}
                       page={page}
-                      onChange={handleChangePage}
+                      onChange={(_event: React.ChangeEvent<unknown>, value: number) => handleChangePage(value)}
                       color="primary"
                       shape="rounded"
                       size="medium"
