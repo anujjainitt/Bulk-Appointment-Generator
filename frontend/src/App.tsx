@@ -280,25 +280,15 @@ function App() {
     setLoading(true);
     try {
       let response;
-      if (selectedRows.length > 0) {
-        // Prepare selected data as JSON
-        const selectedData = [excelData[0], ...selectedRows.map(idx => filteredRows[idx])];
-        response = await fetch('https://bulk-appointment-generator.vercel.app/', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ data: selectedData }),
-        });
-      } else {
-        // Fallback to file upload (all rows)
-        const formData = new FormData();
-        if (excelFile) {
-          formData.append('file', excelFile);
-        }
-        response = await fetch('https://bulk-appointment-generator.vercel.app/', {
-          method: 'POST',
-          body: formData,
-        });
-      }
+      // Always send JSON, even if all rows are selected
+      let rowsToSend = selectedRows.length > 0
+        ? [excelData[0], ...selectedRows.map(idx => filteredRows[idx])]
+        : excelData;
+      response = await fetch('https://bulk-appointment-generator.vercel.app/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ data: rowsToSend }),
+      });
       if (!response.ok) throw new Error('Failed to generate document');
       const blob = await response.blob();
       const disposition = response.headers.get('Content-Disposition');
